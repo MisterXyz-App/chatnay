@@ -1,0 +1,825 @@
+{% extends "base.html" %}
+
+{% block title %}Chat dengan {{ target_user.username }} - Chat App{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+    <!-- Header Chat -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <a href="{{ url_for('dashboard') }}" class="text-white hover:text-blue-200 transition duration-150">
+                <i class="fas fa-arrow-left text-lg"></i>
+            </a>
+            <img src="{{ target_user.profile_picture }}" alt="{{ target_user.username }}" 
+                 class="w-10 h-10 rounded-full border-2 border-white shadow-lg object-cover">
+            <div>
+                <h2 class="text-base font-semibold text-white">{{ target_user.username }}</h2>
+                <p class="text-blue-200 text-xs flex items-center space-x-1 flex-wrap">
+                    {% if target_user.is_admin %}
+                    <span class="bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-full text-xs font-medium">Admin</span>
+                    {% endif %}
+                    <span>•</span>
+                    {% if target_user.is_online() %}
+                    <span class="text-green-300 flex items-center">
+                        <i class="fas fa-circle text-xs mr-1"></i>Online
+                    </span>
+                    {% else %}
+                    <span class="text-gray-300">Offline</span>
+                    {% endif %}
+                    <span>•</span>
+                    <span class="text-xs">Terakhir: {{ target_user.last_seen.strftime('%H:%M') }}</span>
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <a href="{{ url_for('view_user_profile', user_id=target_user.id) }}" 
+               class="bg-blue-500 hover:bg-blue-400 px-3 py-1.5 rounded-lg text-xs text-white transition duration-150 flex items-center space-x-1">
+                <i class="fas fa-user text-xs"></i>
+                <span>Profil</span>
+            </a>
+            {% if current_user.is_admin and not target_user.is_admin %}
+            <div class="flex space-x-1">
+                {% if target_user.is_blocked %}
+                <a href="{{ url_for('toggle_block_user', user_id=target_user.id) }}" 
+                   class="bg-green-500 hover:bg-green-400 px-2 py-1.5 rounded-lg text-xs text-white transition duration-150">
+                    <i class="fas fa-unlock"></i>
+                </a>
+                {% else %}
+                <a href="{{ url_for('toggle_block_user', user_id=target_user.id) }}" 
+                   class="bg-red-500 hover:bg-red-400 px-2 py-1.5 rounded-lg text-xs text-white transition duration-150">
+                    <i class="fas fa-ban"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Area Chat -->
+    <div class="chat-container overflow-y-auto p-4 bg-gray-50" id="chat-messages" style="height: 65vh;"
+         data-current-user-id="{{ current_user.id }}"
+         data-current-user-is-admin="{{ 'true' if current_user.is_admin else 'false' }}">
+        {% for message in messages %}
+        <div class="mb-3 {% if message.sender_id == current_user.id %}text-right{% endif %}" data-message-id="{{ message.id }}">
+            <div class="inline-block max-w-[85vw] md:max-w-md group">
+                {% if message.sender_id != current_user.id %}
+                <div class="flex items-center space-x-2 mb-1">
+                    <img src="{{ message.sender.profile_picture }}" alt="{{ message.sender.username }}" 
+                         class="w-5 h-5 rounded-full object-cover">
+                    <span class="text-xs text-gray-600 font-medium">{{ message.sender.username }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="message-bubble rounded-2xl p-3 {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %} shadow-sm hover:shadow-md transition-all duration-300">
+                    {% if message.media_url %}
+                        {% if message.media_type == 'image' %}
+                        <div class="mb-2">
+                            <img src="{{ message.media_url }}" alt="Gambar" 
+                                 class="max-w-full rounded-lg cursor-pointer transition-transform duration-200 hover:scale-105" 
+                                 onclick="openMediaModal('{{ message.media_url }}', 'image')">
+                        </div>
+                        {% elif message.media_type == 'video' %}
+                        <div class="mb-2">
+                            <video controls class="max-w-full rounded-lg">
+                                <source src="{{ message.media_url }}" type="video/mp4">
+                                Browser Anda tidak mendukung video.
+                            </video>
+                        </div>
+                        {% else %}
+                        <div class="mb-2">
+                            <a href="{{ message.media_url }}" target="_blank" 
+                               class="inline-flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-150 text-sm">
+                                <i class="fas fa-file-download text-blue-500"></i>
+                                <span class="font-medium">Download File</span>
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if message.content %}
+                    <div class="message-content break-words text-sm whitespace-pre-wrap">
+                        {{ message.content|urlize(target="_blank")|safe }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex items-center justify-between mt-1 text-xs opacity-75">
+                        <span class="message-time">{{ message.timestamp }}</span>
+                        <div class="flex items-center space-x-1">
+                            {% if message.is_read and message.sender_id == current_user.id %}
+                            <i class="fas fa-check-double text-blue-400" title="Telah dibaca"></i>
+                            {% elif message.sender_id == current_user.id %}
+                            <i class="fas fa-check text-gray-400" title="Terkirim"></i>
+                            {% endif %}
+                            
+                            {% if message.sender_id == current_user.id or current_user.is_admin %}
+                            <button onclick="deleteMessage({{ message.id }})" 
+                                    class="text-red-400 hover:text-red-600 transition duration-150 ml-2 opacity-0 group-hover:opacity-100"
+                                    title="Hapus pesan">
+                                <i class="fas fa-trash text-xs"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                <i class="fas fa-comments text-blue-500 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-700 mb-2">Mulai Percakapan</h3>
+            <p class="text-gray-500">Belum ada pesan dengan {{ target_user.username }}. Mulai chat sekarang!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="typing-indicator" class="hidden px-4 py-2 bg-gray-50 border-t border-gray-200">
+        <div class="flex items-center space-x-2 text-gray-500 text-sm">
+            <div class="flex space-x-1">
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            </div>
+            <span>{{ target_user.username }} sedang mengetik...</span>
+        </div>
+    </div>
+
+    <!-- Form Input Pesan -->
+    <div class="border-t border-gray-200 p-3 bg-white">
+        <form id="message-form" class="flex space-x-2 items-end">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="receiver_id" value="{{ target_user.id }}">
+            
+            <!-- File Upload Button -->
+            <div class="flex-shrink-0">
+                <label for="file-upload" class="cursor-pointer bg-gray-100 hover:bg-gray-200 w-10 h-10 rounded-full flex items-center justify-center transition duration-150" title="Lampirkan file">
+                    <i class="fas fa-paperclip text-gray-600 text-sm"></i>
+                    <input type="file" id="file-upload" name="file" class="hidden" accept="image/*,video/*,.pdf,.doc,.docx">
+                </label>
+            </div>
+            
+            <!-- Message Input -->
+            <div class="flex-1 min-w-0">
+                <textarea name="content" id="message-input" rows="1" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition duration-150 text-sm"
+                          placeholder="Ketik pesan Anda..." 
+                          oninput="autoResize(this)"></textarea>
+            </div>
+            
+            <!-- Send Button -->
+            <div class="flex-shrink-0">
+                <button type="submit" id="send-button"
+                        class="bg-blue-600 hover:bg-blue-700 w-10 h-10 rounded-full flex items-center justify-center text-white transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Kirim pesan">
+                    <i class="fas fa-paper-plane text-sm"></i>
+                </button>
+            </div>
+        </form>
+        
+        <!-- File Preview -->
+        <div id="file-preview" class="mt-2 hidden">
+            <div class="bg-blue-50 rounded-lg p-2 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-file text-blue-500 text-sm"></i>
+                    <div class="overflow-hidden">
+                        <span id="file-name" class="font-medium text-xs text-blue-900 truncate block"></span>
+                        <span id="file-size" class="text-xs text-blue-700"></span>
+                    </div>
+                </div>
+                <button type="button" onclick="clearFileInput()" 
+                        class="text-red-500 hover:text-red-700 transition duration-150 flex-shrink-0 ml-2">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Upload Progress -->
+        <div id="upload-progress" class="mt-2 hidden">
+            <div class="bg-gray-100 rounded-lg p-2">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-medium text-gray-700">Mengupload...</span>
+                    <span id="progress-percent" class="text-xs text-gray-600">0%</span>
+                </div>
+                <div class="w-full bg-gray-300 rounded-full h-1.5">
+                    <div id="progress-bar" class="bg-blue-600 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal untuk melihat media -->
+<div id="media-modal" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50 flex items-center justify-center p-4">
+    <div class="max-w-4xl max-h-full relative">
+        <img id="modal-image" src="" alt="" class="max-w-full max-h-full hidden rounded-lg shadow-2xl">
+        <video id="modal-video" controls class="max-w-full max-h-full hidden rounded-lg shadow-2xl">
+            Your browser does not support the video tag.
+        </video>
+        <button onclick="closeMediaModal()" 
+                class="absolute -top-4 -right-4 bg-white hover:bg-gray-100 w-8 h-8 rounded-full flex items-center justify-center text-gray-700 transition duration-150 shadow-lg">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+
+<style>
+.message-bubble.sent {
+    background: linear-gradient(135deg, #3B82F6, #1E40AF);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+}
+
+.message-bubble.received {
+    background: linear-gradient(135deg, #F3F4F6, #E5E7EB);
+    color: #374151;
+    border-bottom-left-radius: 4px;
+}
+
+.chat-container {
+    scroll-behavior: smooth;
+}
+
+.chat-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 640px) {
+    .max-w-6xl {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+    
+    .chat-container {
+        height: calc(100vh - 180px) !important;
+    }
+    
+    .message-bubble {
+        max-width: 85vw;
+    }
+}
+
+/* Improve text wrapping and line breaks */
+.message-content {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+/* Ensure proper textarea behavior */
+#message-input {
+    min-height: 40px;
+    max-height: 120px;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+const currentUserId = {{ current_user.id }};
+const currentUserIsAdmin = {{ 'true' if current_user.is_admin else 'false' }};
+const csrfToken = "{{ csrf_token() }}";
+
+// Simple real-time chat manager
+class SimpleChatManager {
+    constructor() {
+        this.lastMessageId = {{ messages[-1].id if messages else 0 }};
+        this.isFetching = false;
+        this.pollInterval = null;
+        this.typingTimer = null;
+    }
+
+    startPolling() {
+        // Stop existing polling
+        this.stopPolling();
+        
+        // Start new polling every 1.5 seconds
+        this.pollInterval = setInterval(() => {
+            this.fetchNewMessages();
+        }, 1500);
+        
+        console.log('Polling started for user:', {{ target_user.id }}, 'Last ID:', this.lastMessageId);
+    }
+
+    stopPolling() {
+        if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
+            console.log('Polling stopped');
+        }
+    }
+
+    async fetchNewMessages() {
+        if (this.isFetching) return;
+        
+        this.isFetching = true;
+        
+        try {
+            const response = await fetch(`/get_messages/{{ target_user.id }}?last_message_id=${this.lastMessageId}&_=${Date.now()}`);
+            const result = await response.json();
+            
+            console.log('Polling response:', result);
+            
+            if (result.success && result.messages && result.messages.length > 0) {
+                console.log('New messages found:', result.messages.length);
+                this.displayMessages(result.messages);
+                this.lastMessageId = Math.max(this.lastMessageId, ...result.messages.map(m => m.id));
+                
+                // Play sound for new messages from other users
+                const newMessagesFromOthers = result.messages.filter(msg => 
+                    msg.sender_id !== currentUserId
+                );
+                if (newMessagesFromOthers.length > 0) {
+                    this.playNotificationSound();
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching messages:', error);
+        } finally {
+            this.isFetching = false;
+        }
+    }
+
+    displayMessages(messages) {
+        const chatContainer = document.getElementById('chat-messages');
+        const wasAtBottom = this.isAtBottom();
+        
+        messages.forEach(message => {
+            // Check if message already exists to avoid duplicates
+            if (!document.querySelector(`[data-message-id="${message.id}"]`)) {
+                const messageElement = this.createMessageElement(message);
+                chatContainer.appendChild(messageElement);
+                
+                // Add animation for new messages
+                messageElement.style.opacity = '0';
+                messageElement.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    messageElement.style.transition = 'all 0.3s ease';
+                    messageElement.style.opacity = '1';
+                    messageElement.style.transform = 'translateY(0)';
+                }, 10);
+            }
+        });
+        
+        if (wasAtBottom || messages.some(msg => msg.sender_id !== currentUserId)) {
+            this.scrollToBottom();
+        }
+    }
+
+    createMessageElement(message) {
+        const isSent = message.sender_id === currentUserId;
+        
+        let mediaContent = '';
+        if (message.media_url) {
+            if (message.media_type === 'image') {
+                mediaContent = `
+                    <div class="mb-2">
+                        <img src="${message.media_url}" alt="Gambar" 
+                             class="max-w-full rounded-lg cursor-pointer" 
+                             onclick="openMediaModal('${message.media_url}', 'image')">
+                    </div>
+                `;
+            } else if (message.media_type === 'video') {
+                mediaContent = `
+                    <div class="mb-2">
+                        <video controls class="max-w-full rounded-lg">
+                            <source src="${message.media_url}" type="video/mp4">
+                            Browser tidak mendukung video.
+                        </video>
+                    </div>
+                `;
+            } else {
+                mediaContent = `
+                    <div class="mb-2">
+                        <a href="${message.media_url}" target="_blank" 
+                           class="inline-flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-150 text-sm">
+                            <i class="fas fa-file-download text-blue-500"></i>
+                            <span class="font-medium">Download File</span>
+                        </a>
+                    </div>
+                `;
+            }
+        }
+        
+        let textContent = '';
+        if (message.content) {
+            textContent = `<div class="break-words text-sm whitespace-pre-wrap">${this.urlize(message.content)}</div>`;
+        }
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `mb-3 ${isSent ? 'text-right' : ''}`;
+        messageDiv.setAttribute('data-message-id', message.id);
+        
+        messageDiv.innerHTML = `
+            <div class="inline-block max-w-[85vw] md:max-w-md group">
+                ${!isSent ? `
+                <div class="flex items-center space-x-2 mb-1">
+                    <img src="${message.sender_profile_pic}" alt="${message.sender_username}" 
+                         class="w-5 h-5 rounded-full object-cover">
+                    <span class="text-xs text-gray-600 font-medium">${message.sender_username}</span>
+                </div>
+                ` : ''}
+                
+                <div class="message-bubble rounded-2xl p-3 ${isSent ? 'sent' : 'received'} shadow-sm hover:shadow-md transition-all duration-300">
+                    ${mediaContent}
+                    ${textContent}
+                    <div class="flex items-center justify-between mt-1 text-xs opacity-75">
+                        <span class="message-time">${message.timestamp}</span>
+                        <div class="flex items-center space-x-1">
+                            ${message.is_read && isSent ? 
+                                '<i class="fas fa-check-double text-blue-400" title="Telah dibaca"></i>' : 
+                                (!message.is_read && isSent ? '<i class="fas fa-check text-gray-400" title="Terkirim"></i>' : '')
+                            }
+                            ${(isSent || currentUserIsAdmin) ? `
+                            <button onclick="deleteMessage(${message.id})" 
+                                    class="text-red-400 hover:text-red-600 transition duration-150 ml-2 opacity-0 group-hover:opacity-100"
+                                    title="Hapus pesan">
+                                <i class="fas fa-trash text-xs"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        return messageDiv;
+    }
+
+    urlize(text) {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, '<a href="$1" target="_blank" class="text-blue-600 hover:text-blue-800 underline break-all">$1</a>');
+    }
+
+    scrollToBottom() {
+        const chatContainer = document.getElementById('chat-messages');
+        if (chatContainer) {
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 50);
+        }
+    }
+
+    isAtBottom() {
+        const chatContainer = document.getElementById('chat-messages');
+        if (!chatContainer) return true;
+        return chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 100;
+    }
+
+    playNotificationSound() {
+        // Simple beep sound using Web Audio API
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        } catch (e) {
+            // Fallback silent
+            console.log('Audio not supported');
+        }
+    }
+
+    async sendMessage(formData) {
+        try {
+            const response = await fetch('/send_message', {
+                method: 'POST',
+                body: formData
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Send message error:', error);
+            return { success: false, error: 'Network error' };
+        }
+    }
+
+    // Typing indicator functions
+    startTyping() {
+        if (this.typingTimer) {
+            clearTimeout(this.typingTimer);
+        }
+        this.showTypingIndicator();
+        
+        this.typingTimer = setTimeout(() => {
+            this.stopTyping();
+        }, 3000);
+    }
+
+    stopTyping() {
+        this.hideTypingIndicator();
+        if (this.typingTimer) {
+            clearTimeout(this.typingTimer);
+            this.typingTimer = null;
+        }
+    }
+
+    showTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) {
+            indicator.classList.remove('hidden');
+        }
+    }
+
+    hideTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) {
+            indicator.classList.add('hidden');
+        }
+    }
+
+    // File upload functions
+    showUploadProgress() {
+        const progress = document.getElementById('upload-progress');
+        if (progress) {
+            progress.classList.remove('hidden');
+        }
+    }
+
+    hideUploadProgress() {
+        const progress = document.getElementById('upload-progress');
+        if (progress) {
+            progress.classList.add('hidden');
+            this.updateProgressBar(0);
+        }
+    }
+
+    updateProgressBar(percent) {
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        
+        if (progressBar) progressBar.style.width = percent + '%';
+        if (progressPercent) progressPercent.textContent = percent + '%';
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+}
+
+// Initialize chat manager
+const chatManager = new SimpleChatManager();
+
+// Global functions
+function openMediaModal(url, type) {
+    const modal = document.getElementById('media-modal');
+    const modalImage = document.getElementById('modal-image');
+    const modalVideo = document.getElementById('modal-video');
+    
+    if (type === 'image') {
+        modalImage.src = url;
+        modalImage.classList.remove('hidden');
+        modalVideo.classList.add('hidden');
+    } else {
+        modalVideo.src = url;
+        modalVideo.classList.remove('hidden');
+        modalImage.classList.add('hidden');
+    }
+    
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMediaModal() {
+    const modal = document.getElementById('media-modal');
+    const modalVideo = document.getElementById('modal-video');
+    
+    modal.classList.add('hidden');
+    if (modalVideo) modalVideo.pause();
+    document.body.style.overflow = 'auto';
+}
+
+function clearFileInput() {
+    document.getElementById('file-upload').value = '';
+    document.getElementById('file-preview').classList.add('hidden');
+}
+
+function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    const newHeight = Math.min(textarea.scrollHeight, 120); // Max height 120px
+    textarea.style.height = newHeight + 'px';
+    
+    // Show typing indicator when user is typing
+    if (textarea.value.trim()) {
+        chatManager.startTyping();
+    } else {
+        chatManager.stopTyping();
+    }
+}
+
+async function deleteMessage(messageId) {
+    if (!confirm('Apakah Anda yakin ingin menghapus pesan ini?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/delete_message/' + messageId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Remove message from UI with animation
+            const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (messageElement) {
+                messageElement.style.transition = 'all 0.3s ease';
+                messageElement.style.opacity = '0';
+                messageElement.style.transform = 'translateY(-10px)';
+                
+                setTimeout(() => {
+                    messageElement.remove();
+                }, 300);
+            }
+        } else {
+            alert('Gagal menghapus pesan: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error);
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Chat page loaded, starting polling...');
+    
+    // Start polling for new messages
+    chatManager.startPolling();
+    
+    // Scroll to bottom initially
+    setTimeout(() => chatManager.scrollToBottom(), 100);
+    
+    // File upload preview
+    const fileUpload = document.getElementById('file-upload');
+    if (fileUpload) {
+        fileUpload.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                document.getElementById('file-name').textContent = file.name;
+                document.getElementById('file-size').textContent = chatManager.formatFileSize(file.size);
+                document.getElementById('file-preview').classList.remove('hidden');
+            }
+        });
+    }
+    
+    // Message form submission
+    const messageForm = document.getElementById('message-form');
+    if (messageForm) {
+        messageForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+            
+            // Basic validation
+            const content = formData.get('content');
+            const file = formData.get('file');
+            if (!content?.trim() && !file?.name) {
+                alert('Pesan tidak boleh kosong');
+                return;
+            }
+            
+            // Disable send button while sending
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            // Show upload progress if file exists
+            if (file && file.name) {
+                chatManager.showUploadProgress();
+                // Simulate progress (in real app, use XMLHttpRequest for actual progress)
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    chatManager.updateProgressBar(progress);
+                    if (progress >= 90) clearInterval(progressInterval);
+                }, 100);
+            }
+            
+            try {
+                const result = await chatManager.sendMessage(formData);
+                
+                if (result.success) {
+                    // Clear form
+                    messageInput.value = '';
+                    messageInput.style.height = 'auto';
+                    clearFileInput();
+                    chatManager.hideUploadProgress();
+                    chatManager.stopTyping();
+                    
+                    // Immediately add the sent message to UI for instant feedback
+                    if (result.message) {
+                        const messages = [result.message];
+                        chatManager.displayMessages(messages);
+                        chatManager.lastMessageId = Math.max(chatManager.lastMessageId, result.message.id);
+                    }
+                    
+                    console.log('Message sent successfully');
+                    
+                } else {
+                    alert('Gagal mengirim pesan: ' + result.error);
+                    chatManager.hideUploadProgress();
+                }
+            } catch (error) {
+                alert('Error: ' + error);
+                chatManager.hideUploadProgress();
+            } finally {
+                // Re-enable send button
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            }
+        });
+    }
+    
+    // Enter key to send message (Shift+Enter for new line)
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                messageForm.dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        messageInput.addEventListener('input', function() {
+            autoResize(this);
+        });
+        
+        // Stop typing when input loses focus
+        messageInput.addEventListener('blur', function() {
+            setTimeout(() => chatManager.stopTyping(), 1000);
+        });
+    }
+    
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            console.log('Page hidden, stopping polling');
+            chatManager.stopPolling();
+        } else {
+            console.log('Page visible, starting polling');
+            chatManager.startPolling();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeMediaModal();
+        }
+    });
+    
+    // Handle touch events for better mobile experience
+    document.addEventListener('touchstart', function() {
+        // Add touch-specific optimizations if needed
+    }, { passive: true });
+});
+
+// Ensure polling stops when leaving page
+window.addEventListener('beforeunload', function() {
+    chatManager.stopPolling();
+});
+
+// Export for global access
+window.chatManager = chatManager;
+window.openMediaModal = openMediaModal;
+window.closeMediaModal = closeMediaModal;
+window.clearFileInput = clearFileInput;
+window.deleteMessage = deleteMessage;
+</script>
+{% endblock %}

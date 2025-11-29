@@ -1,0 +1,691 @@
+{% extends "base.html" %}
+
+{% block title %}Profil Saya - Chat App{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-6 space-y-6">
+    <!-- Modern Profile Header -->
+    <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-2xl shadow-2xl overflow-hidden">
+        <div class="px-6 py-8 text-white">
+            <div class="flex flex-col lg:flex-row items-center justify-between">
+                <div class="flex items-center space-x-4 mb-6 lg:mb-0">
+                    <div class="relative">
+                        <div class="relative group cursor-pointer">
+                            <img src="{{ current_user.profile_picture }}" alt="{{ current_user.username }}" 
+                                 class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white/30 shadow-2xl object-cover transition-all duration-300 group-hover:scale-105">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
+                                <span class="text-white text-xs font-medium">Edit</span>
+                            </div>
+                        </div>
+                        {% if current_user.is_admin %}
+                        <div class="absolute -bottom-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full p-2 shadow-lg">
+                            <i class="fas fa-crown text-sm"></i>
+                        </div>
+                        {% endif %}
+                        <div class="absolute -bottom-2 -left-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full p-1.5 shadow-lg">
+                            <i class="fas fa-circle text-xs" title="Online"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                            {{ current_user.username }}
+                        </h1>
+                        <p class="text-blue-100/80 text-sm sm:text-base mt-1">{{ current_user.email }}</p>
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            {% if current_user.is_active %}
+                            <span class="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold border border-white/30">
+                                <i class="fas fa-check-circle mr-1"></i>Aktif
+                            </span>
+                            {% else %}
+                            <span class="bg-red-500/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold border border-red-500/30">
+                                <i class="fas fa-times-circle mr-1"></i>Nonaktif
+                            </span>
+                            {% endif %}
+                            
+                            {% if current_user.is_blocked %}
+                            <span class="bg-red-500/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold border border-red-500/30">
+                                <i class="fas fa-ban mr-1"></i>Diblokir
+                            </span>
+                            {% endif %}
+                            
+                            {% if current_user.is_admin %}
+                            <span class="bg-yellow-500/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold border border-yellow-500/30">
+                                <i class="fas fa-crown mr-1"></i>Administrator
+                            </span>
+                            {% endif %}
+                            
+                            <span class="bg-blue-500/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold border border-blue-500/30">
+                                <i class="fas fa-calendar mr-1"></i>Bergabung {{ current_user.created_at.strftime('%d %b %Y') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center lg:text-right">
+                    <div class="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">{{ current_user.sent_messages.count() }}</div>
+                    <div class="text-blue-200/80 text-sm">Pesan Dikirim</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Stats Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 sm:p-6 text-center group hover:scale-105 transition-all duration-300">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <i class="fas fa-paper-plane text-white text-lg sm:text-xl"></i>
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-gray-900">{{ current_user.sent_messages.count() }}</div>
+            <div class="text-xs sm:text-sm text-gray-600 font-medium">Pesan Dikirim</div>
+        </div>
+        
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 sm:p-6 text-center group hover:scale-105 transition-all duration-300">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <i class="fas fa-inbox text-white text-lg sm:text-xl"></i>
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-gray-900">{{ current_user.received_messages.count() }}</div>
+            <div class="text-xs sm:text-sm text-gray-600 font-medium">Pesan Diterima</div>
+        </div>
+        
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 sm:p-6 text-center group hover:scale-105 transition-all duration-300">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <i class="fas fa-calendar-day text-white text-lg sm:text-xl"></i>
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-gray-900">{{ days_joined }}</div>
+            <div class="text-xs sm:text-sm text-gray-600 font-medium">Hari Bergabung</div>
+        </div>
+        
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 sm:p-6 text-center group hover:scale-105 transition-all duration-300">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <i class="fas fa-clock text-white text-lg sm:text-xl"></i>
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-gray-900">
+                {{ current_user.last_seen.strftime('%H:%M') if current_user.last_seen else 'N/A' }}
+            </div>
+            <div class="text-xs sm:text-sm text-gray-600 font-medium">Terakhir Online</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+        <div class="p-6">
+            <!-- Modern Tab Navigation -->
+            <div class="border-b border-gray-300/50 mb-8">
+                <nav class="flex flex-wrap gap-2 sm:gap-8" id="profile-tabs">
+                    <button type="button" data-tab="edit-profile" 
+                            class="tab-button py-3 px-4 border-b-2 border-blue-500 font-semibold text-sm text-blue-600 flex items-center space-x-2 bg-blue-50/50 rounded-t-lg transition-all duration-300">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-user-edit text-white text-sm"></i>
+                        </div>
+                        <span>Edit Profil</span>
+                    </button>
+                    <button type="button" data-tab="change-password" 
+                            class="tab-button py-3 px-4 border-b-2 border-transparent font-semibold text-sm text-gray-500 hover:text-gray-700 flex items-center space-x-2 hover:bg-gray-50/50 rounded-t-lg transition-all duration-300">
+                        <div class="w-8 h-8 bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-lock text-white text-sm"></i>
+                        </div>
+                        <span>Ubah Password</span>
+                    </button>
+                    <button type="button" data-tab="account-info" 
+                            class="tab-button py-3 px-4 border-b-2 border-transparent font-semibold text-sm text-gray-500 hover:text-gray-700 flex items-center space-x-2 hover:bg-gray-50/50 rounded-t-lg transition-all duration-300">
+                        <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-info-circle text-white text-sm"></i>
+                        </div>
+                        <span>Info Akun</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Edit Profile Tab -->
+            <div id="edit-profile" class="tab-content space-y-8">
+                <form method="POST" action="{{ url_for('update_profile') }}" enctype="multipart/form-data" class="space-y-8" onsubmit="return validateSocialLinks()">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Profile Picture -->
+                        <div class="space-y-4">
+                            <label class="block text-sm font-semibold text-gray-700">Foto Profil</label>
+                            <div class="flex flex-col items-center space-y-4">
+                                <div class="relative group cursor-pointer">
+                                    <img src="{{ current_user.profile_picture }}" alt="Current Profile" 
+                                         class="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl object-cover border-4 border-blue-200/50 shadow-xl transition-all duration-300 group-hover:scale-105">
+                                    <div class="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                                        <span class="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                            <i class="fas fa-camera mr-1"></i>Ganti Foto
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="w-full">
+                                    <input type="file" name="profile_picture" accept="image/*" 
+                                           class="block w-full text-sm text-gray-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-blue-500 file:to-blue-600 file:text-white hover:file:from-blue-600 hover:file:to-blue-700 transition-all duration-300 cursor-pointer">
+                                    <p class="text-xs text-gray-500 mt-2 text-center">
+                                        Format: JPG, PNG, GIF • Maks 5MB • Ukuran optimal: 256x256px
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Basic Info -->
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                                <div class="relative">
+                                    <input type="text" value="{{ current_user.username }}" 
+                                           class="w-full px-4 py-3.5 bg-gray-100/50 border border-gray-300/50 rounded-xl text-gray-500 cursor-not-allowed">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <i class="fas fa-user text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Username tidak dapat diubah</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                                <div class="relative">
+                                    <input type="email" value="{{ current_user.email }}" 
+                                           class="w-full px-4 py-3.5 bg-gray-100/50 border border-gray-300/50 rounded-xl text-gray-500 cursor-not-allowed">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <i class="fas fa-envelope text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Email tidak dapat diubah</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bio Section -->
+                    <div>
+                        <label for="bio" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-edit mr-2 text-blue-500"></i>Bio <span class="text-gray-500 font-normal">(Opsional)</span>
+                        </label>
+                        <div class="relative">
+                            <textarea id="bio" name="bio" rows="4" 
+                                      class="w-full px-4 py-3.5 bg-white/50 border border-gray-300/50 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-300 placeholder-gray-400 resize-none"
+                                      placeholder="Ceritakan sedikit tentang diri Anda... (Anda dapat menempelkan link di bio)">{{ current_user.bio }}</textarea>
+                            <div class="absolute bottom-3 right-3">
+                                <span id="bio-counter" class="text-xs bg-white/80 px-2 py-1 rounded-lg text-gray-500 border border-gray-300/50">0/500</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Bio akan ditampilkan di profil publik Anda</p>
+                    </div>
+
+                    <!-- Social Links Section -->
+                    <div class="bg-gradient-to-r from-gray-50 to-blue-50/30 rounded-2xl p-5 border border-blue-200/30">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-share-alt mr-2 text-purple-500"></i>Link Sosial Media <span class="text-gray-500 font-normal">(Opsional)</span>
+                        </label>
+                        <p class="text-sm text-gray-600 mb-4">Tambahkan link sosial media atau website Anda dengan nama custom</p>
+                        
+                        <div id="social-links-container" class="space-y-4">
+                            {% for link in current_user.get_social_links() %}
+                            <div class="flex gap-3 items-start social-link-group">
+                                <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div class="relative">
+                                        <input type="text" name="social_names[]" value="{{ link.name }}" 
+                                               class="w-full px-4 py-3.5 bg-white border border-gray-300/50 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300"
+                                               placeholder="Nama media sosial (contoh: Instagram)">
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                            <i class="fas fa-tag text-gray-400 text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="relative">
+                                        <input type="url" name="social_urls[]" value="{{ link.url }}" 
+                                               class="w-full px-4 py-3.5 bg-white border border-gray-300/50 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300"
+                                               placeholder="https://example.com">
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                            <i class="fas fa-link text-gray-400 text-sm"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="removeSocialLink(this)" 
+                                        class="px-4 py-3.5 bg-red-500/10 text-red-600 rounded-xl hover:bg-red-500/20 transition-all duration-300 border border-red-200">
+                                    <i class="fas fa-trash text-sm"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <button type="button" onclick="addSocialLink()" 
+                                class="mt-4 px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 font-semibold shadow-lg">
+                            <i class="fas fa-plus mr-2"></i>Tambah Link Sosial Media
+                        </button>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-end pt-8 border-t border-gray-300/50">
+                        <button type="submit" 
+                                class="px-8 py-3.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="fas fa-save mr-2"></i>Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Change Password Tab -->
+            <div id="change-password" class="tab-content hidden space-y-8">
+                <div class="bg-gradient-to-r from-yellow-50 to-orange-50/30 rounded-2xl p-6 border border-yellow-200/50">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <i class="fas fa-exclamation-triangle text-white text-lg"></i>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-bold text-yellow-800">Keamanan Akun</h3>
+                            <p class="text-yellow-700/80 mt-2 text-sm">
+                                Pastikan password Anda kuat dan unik. Disarankan untuk mengganti password secara berkala
+                                dan tidak menggunakan password yang sama dengan akun lain.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('change_password') }}" class="space-y-6 max-w-2xl">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="current_password" class="block text-sm font-semibold text-gray-700 mb-2">Password Saat Ini</label>
+                            <div class="relative">
+                                <input type="password" id="current_password" name="current_password" required
+                                       class="w-full px-4 py-3.5 bg-white/50 border border-gray-300/50 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-300 placeholder-gray-400">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                    <i class="fas fa-key text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="new_password" class="block text-sm font-semibold text-gray-700 mb-2">Password Baru</label>
+                                <div class="relative">
+                                    <input type="password" id="new_password" name="new_password" required
+                                           class="w-full px-4 py-3.5 bg-white/50 border border-gray-300/50 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-300 placeholder-gray-400">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Minimal 6 karakter</p>
+                                <div id="password-strength" class="text-xs mt-2"></div>
+                            </div>
+                            
+                            <div>
+                                <label for="confirm_password" class="block text-sm font-semibold text-gray-700 mb-2">Konfirmasi Password Baru</label>
+                                <div class="relative">
+                                    <input type="password" id="confirm_password" name="confirm_password" required
+                                           class="w-full px-4 py-3.5 bg-white/50 border border-gray-300/50 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-300 placeholder-gray-400">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <div id="password-match" class="text-xs mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-6">
+                        <button type="submit" 
+                                class="px-8 py-3.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 transition-all duration-300 font-semibold shadow-lg">
+                            <i class="fas fa-key mr-2"></i>Ubah Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Account Info Tab -->
+            <div id="account-info" class="tab-content hidden space-y-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Account Details -->
+                    <div class="bg-gradient-to-r from-gray-50 to-blue-50/30 rounded-2xl p-6 border border-gray-300/50">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                                <i class="fas fa-id-card text-white"></i>
+                            </div>
+                            Detail Akun
+                        </h3>
+                        <div class="space-y-3">
+                            {% for detail in [
+                                ('User ID', current_user.id, 'fas fa-fingerprint', 'gray'),
+                                ('Username', current_user.username, 'fas fa-user', 'blue'),
+                                ('Email', current_user.email, 'fas fa-envelope', 'green'),
+                                ('Bergabung', current_user.created_at.strftime('%d %B %Y'), 'fas fa-calendar', 'purple'),
+                                ('Terakhir Online', current_user.last_seen.strftime('%d %b %Y %H:%M') if current_user.last_seen else 'Tidak tersedia', 'fas fa-clock', 'orange')
+                            ] %}
+                            <div class="flex items-center justify-between py-2.5 px-3 rounded-xl bg-white/50 border border-gray-300/30">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-gradient-to-r from-{{ detail[3] }}-500 to-{{ detail[3] }}-600 rounded-lg flex items-center justify-center">
+                                        <i class="{{ detail[2] }} text-white text-xs"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-700">{{ detail[0] }}</span>
+                                </div>
+                                <span class="text-sm font-semibold text-gray-900">{{ detail[1] }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Account Status -->
+                    <div class="bg-gradient-to-r from-gray-50 to-green-50/30 rounded-2xl p-6 border border-gray-300/50">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                                <i class="fas fa-chart-bar text-white"></i>
+                            </div>
+                            Status Akun
+                        </h3>
+                        <div class="space-y-3">
+                            {% for status in [
+                                ('Status', current_user.is_active, 'Aktif', 'Nonaktif', 'green', 'red', 'fas fa-circle'),
+                                ('Status Blokir', current_user.is_blocked, 'Diblokir', 'Tidak Diblokir', 'red', 'green', 'fas fa-ban'),
+                                ('Role', current_user.is_admin, 'Administrator', 'User', 'yellow', 'blue', 'fas fa-crown'),
+                                ('Status Online', current_user.is_online(), 'Online', 'Offline', 'green', 'gray', 'fas fa-wifi'),
+                                ('Lama Bergabung', days_joined ~ ' hari', '', '', 'purple', '', 'fas fa-history')
+                            ] %}
+                            <div class="flex items-center justify-between py-2.5 px-3 rounded-xl bg-white/50 border border-gray-300/30">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-gradient-to-r from-{{ status[4] }}-500 to-{{ status[4] }}-600 rounded-lg flex items-center justify-center">
+                                        <i class="{{ status[6] }} text-white text-xs"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-700">{{ status[0] }}</span>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-{{ status[4] }}-100 text-{{ status[4] }}-800">
+                                    {{ status[2] if status[1] else status[3] }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50/30 rounded-2xl p-6 border border-blue-200/50">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                            <i class="fas fa-bolt text-white"></i>
+                        </div>
+                        Aksi Cepat
+                    </h3>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        {% for action in [
+                            ('Pergi ke Chat', url_for('dashboard'), 'fas fa-comments', 'blue'),
+                            ('Panel Admin', url_for('admin_dashboard'), 'fas fa-cog', 'yellow'),
+                            ('Keluar', url_for('logout'), 'fas fa-sign-out-alt', 'red')
+                        ] %}
+                        {% if action[0] != 'Panel Admin' or current_user.is_admin %}
+                        <a href="{{ action[1] }}" 
+                           class="flex items-center space-x-3 px-6 py-3.5 bg-white text-{{ action[3] }}-600 rounded-xl hover:bg-{{ action[3] }}-50 transition-all duration-300 font-semibold border border-{{ action[3] }}-200 shadow-sm hover:scale-105">
+                            <div class="w-8 h-8 bg-gradient-to-r from-{{ action[3] }}-500 to-{{ action[3] }}-600 rounded-lg flex items-center justify-center">
+                                <i class="{{ action[2] }} text-white text-sm"></i>
+                            </div>
+                            <span>{{ action[0] }}</span>
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tab functionality
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    
+    // Show selected tab with animation
+    const activeTab = document.getElementById(tabName);
+    activeTab.classList.remove('hidden');
+    activeTab.style.opacity = '0';
+    activeTab.style.transform = 'translateY(10px)';
+    
+    setTimeout(() => {
+        activeTab.style.transition = 'all 0.3s ease';
+        activeTab.style.opacity = '1';
+        activeTab.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        if (button.getAttribute('data-tab') === tabName) {
+            button.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:bg-gray-50/50');
+            button.classList.add('border-blue-500', 'text-blue-600', 'bg-blue-50/50');
+        } else {
+            button.classList.remove('border-blue-500', 'text-blue-600', 'bg-blue-50/50');
+            button.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:bg-gray-50/50');
+        }
+    });
+}
+
+// Social links functionality
+function addSocialLink() {
+    const container = document.getElementById('social-links-container');
+    const newLink = document.createElement('div');
+    newLink.className = 'flex gap-3 items-start social-link-group';
+    newLink.innerHTML = `
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="relative">
+                <input type="text" name="social_names[]" 
+                       class="w-full px-4 py-3.5 bg-white border border-gray-300/50 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300"
+                       placeholder="Nama media sosial" required>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <i class="fas fa-tag text-gray-400 text-sm"></i>
+                </div>
+            </div>
+            <div class="relative">
+                <input type="url" name="social_urls[]" 
+                       class="w-full px-4 py-3.5 bg-white border border-gray-300/50 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300"
+                       placeholder="https://example.com" required>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <i class="fas fa-link text-gray-400 text-sm"></i>
+                </div>
+            </div>
+        </div>
+        <button type="button" onclick="removeSocialLink(this)" 
+                class="px-4 py-3.5 bg-red-500/10 text-red-600 rounded-xl hover:bg-red-500/20 transition-all duration-300 border border-red-200">
+            <i class="fas fa-trash text-sm"></i>
+        </button>
+    `;
+    container.appendChild(newLink);
+    
+    // Add animation
+    newLink.style.opacity = '0';
+    newLink.style.transform = 'translateY(-10px)';
+    setTimeout(() => {
+        newLink.style.transition = 'all 0.3s ease';
+        newLink.style.opacity = '1';
+        newLink.style.transform = 'translateY(0)';
+    }, 10);
+}
+
+function removeSocialLink(button) {
+    const group = button.closest('.social-link-group');
+    group.style.opacity = '0';
+    group.style.transform = 'translateY(-10px)';
+    setTimeout(() => {
+        group.remove();
+    }, 300);
+}
+
+// Form validation
+function validateSocialLinks() {
+    const socialNames = document.getElementsByName('social_names[]');
+    const socialUrls = document.getElementsByName('social_urls[]');
+    
+    for (let i = 0; i < socialNames.length; i++) {
+        const name = socialNames[i].value.trim();
+        const url = socialUrls[i].value.trim();
+        
+        if ((name && !url) || (!name && url)) {
+            showNotification('Harap isi kedua field (nama dan URL) untuk setiap link sosial media', 'error');
+            return false;
+        }
+        
+        if (url && !isValidUrl(url)) {
+            showNotification('Format URL tidak valid untuk: ' + (name || 'link tanpa nama'), 'error');
+            return false;
+        }
+    }
+    return true;
+}
+
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+// Bio character counter
+function updateBioCounter() {
+    const bio = document.getElementById('bio');
+    const counter = document.getElementById('bio-counter');
+    if (bio && counter) {
+        const length = bio.value.length;
+        counter.textContent = `${length}/500`;
+        
+        if (length > 500) {
+            counter.classList.add('bg-red-100', 'text-red-600', 'border-red-300');
+            counter.classList.remove('bg-white/80', 'text-gray-500', 'border-gray-300/50');
+            bio.classList.add('border-red-300');
+        } else {
+            counter.classList.remove('bg-red-100', 'text-red-600', 'border-red-300');
+            counter.classList.add('bg-white/80', 'text-gray-500', 'border-gray-300/50');
+            bio.classList.remove('border-red-300');
+        }
+    }
+}
+
+// Password strength indicator
+function checkPasswordStrength() {
+    const password = document.getElementById('new_password').value;
+    const strength = document.getElementById('password-strength');
+    
+    if (!password) {
+        strength.textContent = '';
+        return;
+    }
+    
+    let score = 0;
+    if (password.length >= 6) score++;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    
+    const texts = ['Sangat Lemah', 'Lemah', 'Cukup', 'Kuat', 'Sangat Kuat'];
+    const colors = ['text-red-500', 'text-orange-500', 'text-yellow-500', 'text-green-500', 'text-green-600'];
+    
+    strength.textContent = `Kekuatan: ${texts[score - 1] || ''}`;
+    strength.className = `text-xs mt-2 ${colors[score - 1] || 'text-red-500'} font-semibold`;
+}
+
+// Password match checker
+function checkPasswordMatch() {
+    const password = document.getElementById('new_password').value;
+    const confirm = document.getElementById('confirm_password').value;
+    const match = document.getElementById('password-match');
+    
+    if (!confirm) {
+        match.textContent = '';
+        return;
+    }
+    
+    if (password === confirm) {
+        match.textContent = '✓ Password cocok';
+        match.className = 'text-xs mt-2 text-green-500 font-semibold';
+    } else {
+        match.textContent = '✗ Password tidak cocok';
+        match.className = 'text-xs mt-2 text-red-500 font-semibold';
+    }
+}
+
+// Notification system
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-xl shadow-lg z-50 transform transition-all duration-300 ${
+        type === 'error' ? 'bg-red-500 text-white' : 
+        type === 'success' ? 'bg-green-500 text-white' : 
+        'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(100px)';
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 10);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100px)';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab click events
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', function() {
+            showTab(this.getAttribute('data-tab'));
+        });
+    });
+    
+    // Bio counter
+    const bio = document.getElementById('bio');
+    if (bio) {
+        bio.addEventListener('input', updateBioCounter);
+        updateBioCounter();
+    }
+    
+    // Password strength
+    const newPassword = document.getElementById('new_password');
+    if (newPassword) {
+        newPassword.addEventListener('input', checkPasswordStrength);
+        newPassword.addEventListener('input', checkPasswordMatch);
+    }
+    
+    // Confirm password
+    const confirmPassword = document.getElementById('confirm_password');
+    if (confirmPassword) {
+        confirmPassword.addEventListener('input', checkPasswordMatch);
+    }
+});
+</script>
+
+<style>
+.social-link-group {
+    transition: all 0.3s ease;
+}
+
+.tab-content {
+    transition: all 0.3s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #2563eb, #7c3aed);
+}
+</style>
+{% endblock %}
