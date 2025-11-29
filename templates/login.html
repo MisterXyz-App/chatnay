@@ -3,57 +3,99 @@
 {% block title %}Login - Chat App{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <div>
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Login ke Akun Anda
-            </h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Atau
-                <a href="{{ url_for('register') }}" class="font-medium text-blue-600 hover:text-blue-500">
-                    daftar akun baru
-                </a>
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+        <!-- Card Container -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <!-- Decorative Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 py-6 px-8">
+                <div class="flex items-center justify-center space-x-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-comments text-white text-lg"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">Selamat Datang</h2>
+                </div>
+                <p class="mt-2 text-center text-blue-100 text-sm">
+                    Masuk untuk melanjutkan percakapan
+                </p>
+            </div>
+            
+            <!-- Form Section -->
+            <div class="py-8 px-8">
+                <form class="space-y-6" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <!-- Username Field -->
+                    <div class="space-y-2">
+                        <label for="username" class="block text-sm font-medium text-gray-700">
+                            <i class="fas fa-user mr-2 text-blue-500"></i>
+                            Username
+                        </label>
+                        <div class="relative">
+                            <input id="username" name="username" type="text" required 
+                                   class="w-full px-4 py-3 pl-11 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                   placeholder="Masukkan username Anda">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="space-y-2">
+                        <label for="password" class="block text-sm font-medium text-gray-700">
+                            <i class="fas fa-lock mr-2 text-blue-500"></i>
+                            Password
+                        </label>
+                        <div class="relative">
+                            <input id="password" name="password" type="password" required 
+                                   class="w-full px-4 py-3 pl-11 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                   placeholder="Masukkan password Anda">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="flex items-center">
+                        <div class="flex items-center h-5">
+                            <input id="remember" name="remember" type="checkbox" 
+                                   class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        </div>
+                        <label for="remember" class="ml-3 block text-sm text-gray-700">
+                            Ingat saya
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-[1.02] shadow-md">
+                        <div class="flex items-center justify-center space-x-2">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Login ke Akun</span>
+                        </div>
+                    </button>
+                </form>
+
+                <!-- Registration Link -->
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Belum punya akun?
+                        <a href="{{ url_for('register') }}" class="font-semibold text-blue-600 hover:text-blue-500 transition-colors duration-200 ml-1">
+                            Daftar di sini
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="mt-8 text-center">
+            <p class="text-xs text-gray-500">
+                © 2024 Chat App. Tempat terbaik untuk berkomunikasi
             </p>
         </div>
-        <form class="mt-8 space-y-6" method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
-            <div class="rounded-md shadow-sm -space-y-px">
-                <div>
-                    <label for="username" class="sr-only">Username</label>
-                    <input id="username" name="username" type="text" required 
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                           placeholder="Username">
-                </div>
-                <div>
-                    <label for="password" class="sr-only">Password</label>
-                    <input id="password" name="password" type="password" required 
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                           placeholder="Password">
-                </div>
-            </div>
-
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <input id="remember" name="remember" type="checkbox" 
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <label for="remember" class="ml-2 block text-sm text-gray-900">
-                        Ingat saya
-                    </label>
-                </div>
-            </div>
-
-            <div>
-                <button type="submit" 
-                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                        <i class="fas fa-sign-in-alt"></i>
-                    </span>
-                    Login
-                </button>
-            </div>
-        </form>
     </div>
 </div>
 {% endblock %}
